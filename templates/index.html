@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Zodiac Traits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-star"></i> Cosmic Zodiac Traits <i class="fas fa-star"></i></h1>
+        <div class="form-container">
+            <form id="horoscopeForm">
+                <div class="form-group">
+                    <label for="zodiac"><i class="fas fa-moon"></i> Select Your Zodiac Sign:</label>
+                    <select id="zodiac" name="zodiac" class="cosmic-select" required>
+                        <option value="">Choose your sign...</option>
+                        {% for sign, dates in zodiac_signs.items() %}
+                        <option value="{{ sign }}">{{ sign|capitalize }} ({{ dates }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="cosmic-button">
+                    <i class="fas fa-magic"></i> Reveal Your Cosmic Traits
+                </button>
+            </form>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="stars"></div>
+            <p><i class="fas fa-spinner fa-spin"></i> Consulting the cosmic forces...</p>
+        </div>
+
+        <div id="result" class="result" style="display: none;">
+            <div class="horoscope-content">
+                <h2 id="zodiacTitle" class="zodiac-title">
+                    <i class="fas fa-sun"></i> <span></span>
+                </h2>
+                <p id="dateRange" class="date-range"></p>
+                <div class="horoscope-details">
+                    <p><strong>Your Personality:</strong> <span id="personality"></span></p>
+                    <p><strong>Your Thoughts:</strong> <span id="thoughts"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i> <span></span>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('horoscopeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+            
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            error.style.display = 'none';
+            
+            try {
+                const formData = new FormData(this);
+                const response = await fetch('/get_horoscope', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.querySelector('#zodiacTitle span').textContent = data.zodiac;
+                    document.getElementById('dateRange').textContent = data.date_range;
+                    document.getElementById('personality').textContent = data.traits.personality;
+                    document.getElementById('thoughts').textContent = data.traits.thoughts;
+                    
+                    result.style.display = 'block';
+                } else {
+                    error.querySelector('span').textContent = data.error || 'An error occurred';
+                    error.style.display = 'block';
+                }
+            } catch (err) {
+                error.querySelector('span').textContent = 'Failed to connect to the server';
+                error.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 
